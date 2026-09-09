@@ -22,9 +22,17 @@ const MAX_ATTEMPTS = 3;
  */
 export async function sendDiscordEmbeds(
   webhookUrl: string,
-  embeds: DiscordEmbed[]
+  embeds: DiscordEmbed[],
+  content?: string
 ): Promise<boolean> {
-  const body = JSON.stringify({ embeds });
+  const payload: Record<string, unknown> = { embeds };
+  if (content) {
+    payload.content = content;
+    // Only the `content` string can ping; embeds never do. Allow @here/@everyone
+    // and role mentions there, but never user mentions from stray text.
+    payload.allowed_mentions = { parse: ["everyone", "roles"] };
+  }
+  const body = JSON.stringify(payload);
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {

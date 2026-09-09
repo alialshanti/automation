@@ -1,6 +1,8 @@
 export interface Config {
   githubWebhookSecret: string;
   discordWebhookUrl: string;
+  /** Text prepended to the message on important events (PR opened/merged, CI failure). Empty = no ping. */
+  alertMention: string;
   port: number;
 }
 
@@ -44,5 +46,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new Error(`PORT must be a port number between 1 and 65535, got "${env.PORT}".`);
   }
 
-  return { githubWebhookSecret, discordWebhookUrl, port };
+  // Unset -> "@here"; "off"/"none"/"" -> disabled; anything else used verbatim
+  // (e.g. a role mention like "<@&123456789012345678>").
+  const rawMention = env.DISCORD_ALERT_MENTION;
+  const alertMention =
+    rawMention === undefined
+      ? "@here"
+      : ["", "off", "none", "false"].includes(rawMention.trim().toLowerCase())
+        ? ""
+        : rawMention.trim();
+
+  return { githubWebhookSecret, discordWebhookUrl, alertMention, port };
 }

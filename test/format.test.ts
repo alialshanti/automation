@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildEmbed } from "../src/format";
+import { buildEmbed, buildNotification } from "../src/format";
 
 const repository = { full_name: "acme/app", html_url: "https://github.com/acme/app" };
 const sender = { login: "octocat", html_url: "https://github.com/octocat", avatar_url: "x" };
@@ -72,4 +72,41 @@ test("unknown event with a repo falls back to a generic embed", () => {
 
 test("unknown event without a repo is skipped", () => {
   assert.equal(buildEmbed("meta", {}), null);
+});
+
+test("alerts: opened PR, merged PR and failed CI ping; others don't", () => {
+  const openedPr = buildNotification("pull_request", {
+    action: "opened",
+    number: 1,
+    repository,
+    pull_request: { number: 1, title: "x", html_url: "h" },
+  });
+  const mergedPr = buildNotification("pull_request", {
+    action: "closed",
+    number: 1,
+    repository,
+    pull_request: { number: 1, title: "x", merged: true, html_url: "h" },
+  });
+  const closedPr = buildNotification("pull_request", {
+    action: "closed",
+    number: 1,
+    repository,
+    pull_request: { number: 1, title: "x", merged: false, html_url: "h" },
+  });
+  const failedCi = buildNotification("workflow_run", {
+    action: "completed",
+    repository,
+    workflow_run: { name: "CI", head_branch: "main", conclusion: "failure", html_url: "h" },
+  });
+  const push = buildNotification("push", {
+    repository,
+    ref: "refs/heads/main",
+    commits: [{ id: "a1b2c3d4", message: "m", url: "u" }],
+  });
+
+  assert.equal(openedPr?.alert, true);
+  assert.equal(mergedPr?.alert, true);
+  assert.equal(closedPr?.alert, false);
+  assert.equal(failedCi?.alert, true);
+  assert.equal(push?.alert, false);
 });

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { verifySignature } from "../utils/verifySignature";
-import { buildEmbed } from "../format";
+import { buildNotification } from "../format";
 import { sendDiscordEmbeds } from "../services/discord";
 import type { Config } from "../config";
 
@@ -19,24 +19,30 @@ export function createWebhookRouter(config: Config): Router {
     const event = req.header("X-GitHub-Event") ?? "unknown";
     const delivery = req.header("X-GitHub-Delivery") ?? "?";
 
-    let embed;
+    let notification;
     try {
-      embed = buildEmbed(event, req.body);
+      notification = buildNotification(event, req.body);
     } catch (error) {
       console.error(`[${delivery}] Could not format "${event}" event:`, error);
       res.status(200).json({ received: true, forwarded: false });
       return;
     }
 
-    if (!embed) {
+    if (!notification) {
       res.status(200).json({ received: true, forwarded: false });
       return;
     }
 
+    const mention = notification.alert && config.alertMention ? config.alertMention : undefined;
+
     // Forward before responding: on serverless platforms any work left
     // running after res.send() is killed. sendDiscordEmbeds has its own
     // 8s timeout, inside GitHub's 10s delivery limit, and never throws.
-    const forwarded = await sendDiscordEmbeds(config.discordWebhookUrl, [embed]);
+    const forwarded = await sendDiscordEmbeds(
+      config.discordWebhookUrl,
+      [notification.embed],
+      mention
+    );
     if (!forwarded) {
       console.error(`[${delivery}] Failed to forward "${event}" event to Discord`);
     }

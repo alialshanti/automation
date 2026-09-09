@@ -19,6 +19,8 @@ colour-coded embeds.
   | `create` / `delete` | branch or tag created / deleted |
   | `star` | new star |
   | anything else | a one-line generic embed (only if it carries a repo) |
+- Pings the team (`DISCORD_ALERT_MENTION`, default `@here`) on the events
+  worth interrupting for: a PR opened, a PR merged, or a CI run that failed.
 - Forwards to Discord **before** replying to GitHub, with an 8s timeout and
   retries on rate limits / 5xx. A Discord outage is logged, never fatal, and
   the endpoint still returns `200`.
@@ -51,6 +53,7 @@ npm test            # unit tests (node:test)
 | ----------------------- | :------: | --------------------------------------------------------------------- |
 | `GITHUB_WEBHOOK_SECRET` |   yes    | Secret set on the GitHub webhook, used to verify request signatures    |
 | `DISCORD_WEBHOOK_URL`   |   yes    | Discord incoming webhook URL (`https://discord.com/api/webhooks/…`)   |
+| `DISCORD_ALERT_MENTION` |    no    | Ping text on important events (PR opened/merged, CI failure). Default `@here`; use `<@&ROLE_ID>` for a role, or `off` to disable |
 | `PORT`                  |    no    | Port to listen on (default `3000`; most hosts set this for you)        |
 
 Generate a secret:

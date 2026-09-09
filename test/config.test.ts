@@ -17,6 +17,18 @@ test("defaults the port to 3000", () => {
   assert.equal(loadConfig(valid as NodeJS.ProcessEnv).port, 3000);
 });
 
+test("alert mention defaults to @here, respects override and 'off'", () => {
+  assert.equal(loadConfig(valid as NodeJS.ProcessEnv).alertMention, "@here");
+  assert.equal(
+    loadConfig({ ...valid, DISCORD_ALERT_MENTION: "<@&123>" } as NodeJS.ProcessEnv).alertMention,
+    "<@&123>"
+  );
+  assert.equal(
+    loadConfig({ ...valid, DISCORD_ALERT_MENTION: "off" } as NodeJS.ProcessEnv).alertMention,
+    ""
+  );
+});
+
 test("throws listing every missing variable", () => {
   assert.throws(() => loadConfig({} as NodeJS.ProcessEnv), /GITHUB_WEBHOOK_SECRET.*DISCORD_WEBHOOK_URL/s);
 });

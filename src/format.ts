@@ -14,6 +14,37 @@ const MAX_TITLE = 256;
 const MAX_DESCRIPTION = 4096;
 const BODY_PREVIEW = 500;
 
+export interface Notification {
+  embed: DiscordEmbed;
+  /** Whether to ping (PR opened/merged, CI failure). */
+  alert: boolean;
+}
+
+/**
+ * Turns a GitHub webhook (event name + JSON payload) into a Discord
+ * notification, or `null` when the event shouldn't produce one.
+ */
+export function buildNotification(event: string, payload: any): Notification | null {
+  const embed = buildEmbed(event, payload);
+  if (!embed) return null;
+  return { embed, alert: isAlert(event, payload) };
+}
+
+/** The handful of events worth pinging the team about. */
+function isAlert(event: string, payload: any): boolean {
+  if (event === "pull_request") {
+    if (payload.action === "opened") return true;
+    return payload.action === "closed" && Boolean(payload.pull_request?.merged);
+  }
+  if (event === "workflow_run") {
+    return (
+      payload.action === "completed" &&
+      ["failure", "timed_out"].includes(payload.workflow_run?.conclusion)
+    );
+  }
+  return false;
+}
+
 /**
  * Turns a GitHub webhook (event name + JSON payload) into a Discord embed,
  * or `null` when the event shouldn't produce a notification.
