@@ -61,15 +61,15 @@ node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
 
 ## Deploy (free options)
 
-The app is a normal long-running Node server, so any of these work with no
-code changes:
-
-- **Render** — `render.yaml` is included. New → Blueprint, point it at this
-  repo, set the two env vars. Free tier sleeps after ~15 min idle; the first
-  request after a sleep can be slow, but GitHub retries.
-- **Koyeb** — free tier, stays awake 24/7. Deploy from GitHub, build
-  `npm install && npm run build`, run `npm start`.
-- **Fly.io / Railway / any VPS** — same build and start commands.
+- **Vercel** (free, never sleeps) — `api/index.ts` + `vercel.json` are
+  included. Import the repo, Framework Preset **Other**, no build command
+  needed, add the two env vars, deploy. All routes are rewritten to the
+  serverless function.
+- **Render** (free, sleeps after ~15 min idle) — `render.yaml` is included.
+  New → Blueprint, point it at this repo, set the two env vars. The first
+  request after a sleep is slow, but GitHub retries deliveries.
+- **Fly.io / Railway / any VPS** — a normal long-running server:
+  build `npm install && npm run build`, start `npm start`.
 
 ### 1. Create a Discord webhook
 
@@ -78,9 +78,11 @@ Copy Webhook URL → put it in `DISCORD_WEBHOOK_URL`.
 
 ### 2. Deploy
 
-Deploy with the build command `npm install && npm run build` and the start
-command `npm start`, and set `GITHUB_WEBHOOK_SECRET` and
-`DISCORD_WEBHOOK_URL`. Check `https://<your-host>/health` afterwards.
+Pick a host above and set `GITHUB_WEBHOOK_SECRET` and `DISCORD_WEBHOOK_URL`.
+On Vercel it's a zero-config import; elsewhere the build command is
+`npm install && npm run build` and the start command is `npm start`.
+Check `https://<your-host>/health` afterwards — it should return
+`{ "status": "ok" }`.
 
 ### 3. Add the GitHub webhook
 
@@ -97,6 +99,7 @@ response under **Recent Deliveries**.
 ## Project layout
 
 ```
+api/index.ts            Vercel serverless entrypoint (exports the Express app)
 src/
   index.ts              startup: load config, start server, graceful shutdown
   app.ts                Express app factory (raw-body capture, routes)
