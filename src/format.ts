@@ -90,9 +90,12 @@ function pushEmbed(payload: any): DiscordEmbed | null {
   return {
     ...base(payload),
     color: COLOR.blurple,
-    title: truncate(`[${repoName(payload)}:${ref}] ${commits.length} new commit${plural}${forced}`, MAX_TITLE),
+    title: truncate(`${commits.length} new commit${plural}${forced} to ${repoName(payload)}`, MAX_TITLE),
     url: payload.compare,
-    description: truncate(lines.join("\n"), MAX_DESCRIPTION),
+    fields: [
+      { name: "Branch", value: `\`${ref}\`` },
+      { name: `Commit${plural}`, value: truncate(lines.join("\n"), 1024) },
+    ],
   };
 }
 

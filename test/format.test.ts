@@ -21,10 +21,13 @@ test("push lists commits", () => {
     ],
   });
   assert.ok(embed);
-  assert.match(embed!.title!, /\[acme\/app:main\] 2 new commits/);
-  assert.match(embed!.description!, /abcdef1/);
-  assert.match(embed!.description!, /fix: thing/);
-  assert.doesNotMatch(embed!.description!, /details/);
+  assert.match(embed!.title!, /2 new commits to acme\/app/);
+  const branch = embed!.fields!.find((f) => f.name === "Branch");
+  const commitsField = embed!.fields!.find((f) => f.name === "Commits");
+  assert.equal(branch!.value, "`main`");
+  assert.match(commitsField!.value, /abcdef1/);
+  assert.match(commitsField!.value, /fix: thing/);
+  assert.doesNotMatch(commitsField!.value, /details/);
 });
 
 test("push with no commits is skipped", () => {
